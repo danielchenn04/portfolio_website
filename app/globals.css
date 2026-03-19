@@ -87,10 +87,15 @@
   /* Typewriter */
   --typewriter-speed:        80ms;
   --typewriter-cursor-blink: 600ms;
+
+  /* Navbar frosted-glass background */
+  --color-navbar-bg: rgba(15, 15, 26, 0.80);
 }
 
 /* ── 2. Light theme overrides ────────────────────────────── */
 .light {
+  /* Navbar frosted-glass background */
+  --color-navbar-bg: rgba(248, 248, 252, 0.80);
   --color-bg-base:       #f8f8fc;
   --color-bg-surface:    #ffffff;
   --color-bg-elevated:   #ffffff;
@@ -183,4 +188,21 @@
   display: inline-block;
   color: var(--color-accent);
   animation: blink var(--typewriter-cursor-blink) step-end infinite;
+}
+
+/* ── 6. Button spinner ───────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── 7. Mobile menu animations ───────────────────────────── */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
