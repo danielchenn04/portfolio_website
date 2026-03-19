@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { Hero } from '@/components/home/Hero';
@@ -5,6 +6,13 @@ import { ProjectPreview } from '@/components/home/ProjectPreview';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { FadeUp } from '@/components/ui/FadeUp';
 import { DotShield } from '@/components/ui/DotShield';
+import { buildMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = buildMetadata({
+  title:       'Home',
+  description: 'Software engineer portfolio — building clean, functional products across full-stack, backend, and security.',
+  path:        '/',
+});
 
 const sectionStyle = {
   maxWidth: '1200px',
