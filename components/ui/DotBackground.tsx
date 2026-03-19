@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { getShieldRects } from '@/lib/dotShield';
 
 const DOT_GAP       = 24;
 const DOT_RESTING_R = 1;
@@ -50,19 +51,27 @@ export function DotBackground() {
       ctx.fillStyle = light ? BG_LIGHT : BG_DARK;
       ctx.fillRect(0, 0, W, H);
 
-      const cols = Math.ceil(W / DOT_GAP) + 1;
-      const rows = Math.ceil(H / DOT_GAP) + 1;
+      const cols       = Math.ceil(W / DOT_GAP) + 1;
+      const rows       = Math.ceil(H / DOT_GAP) + 1;
+      const shieldRects = getShieldRects();
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const x    = c * DOT_GAP;
-          const y    = r * DOT_GAP;
-          const dist = Math.hypot(x - mx, y - my);
+          const x = c * DOT_GAP;
+          const y = r * DOT_GAP;
+
+          const shielded = shieldRects.some(
+            rect => x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom,
+          );
+
+          const dist = shielded ? Infinity : Math.hypot(x - mx, y - my);
           const raw  = Math.max(0, 1 - dist / INFLUENCE_R);
           const t    = raw * raw * (3 - 2 * raw);
 
           const radius = DOT_RESTING_R + t * (DOT_MAX_R - DOT_RESTING_R);
-          const alpha  = 0.35 + t * 0.45;
+          const alpha  = light
+            ? 0.10 + t * 0.25   // light: 10% resting → 35% max
+            : 0.35 + t * 0.45;  // dark:  35% resting → 80% max (unchanged)
 
           ctx.shadowOffsetX = 0;
           ctx.shadowOffsetY = t > 0 ? t * 3 : 0;
@@ -70,7 +79,7 @@ export function DotBackground() {
           ctx.shadowColor   = t > 0 ? `rgba(0,0,0,${t * 0.5})` : 'transparent';
 
           ctx.fillStyle = light
-            ? `rgba(0,0,0,${alpha})`
+            ? `rgba(82,82,122,${alpha})`   // echoes --color-text-secondary
             : `rgba(150,150,150,${alpha})`;
 
           ctx.beginPath();
