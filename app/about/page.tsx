@@ -12,11 +12,11 @@ export const metadata: Metadata = buildMetadata({
 
 // ── Placeholder skills — owner updates these in Phase 8 ──────────────────────
 const SKILLS: Record<string, string[]> = {
-  'Languages':      ['TypeScript', 'Python', 'Go', 'Rust', 'SQL', 'Bash'],
-  'Frameworks':     ['React', 'Next.js', 'Node.js', 'Express', 'FastAPI', 'Tailwind CSS'],
-  'Databases':      ['PostgreSQL', 'Redis', 'SQLite', 'Prisma'],
-  'Tools & DevOps': ['Git', 'Docker', 'Vercel', 'GitHub Actions', 'Linux'],
-  'Security':       ['Burp Suite', 'Metasploit', 'Wireshark', 'Nmap', 'OWASP'],
+  'Languages':      ['TypeScript', 'JavaScript', 'Python', 'Java', 'C', 'HTML', 'SQL', 'Bash'],
+  'Frameworks':     ['React', 'Next.js', 'Node.js', 'Express', 'Tailwind CSS'],
+  'Databases':      ['Supabase', 'PostgreSQL', 'Firebase'],
+  'Tools & DevOps': ['Git', 'Vercel', 'GitHub Actions', 'Linux', 'Render', 'Docker'],
+  'Security':       ['RSA-OAEP', 'AES-GCM', 'PBKDF2', 'Web Crypto API', 'End-to-End Encryption', 'JWT', 'RBAC', 'Row-Level Security', 'Replay Attack Prevention', 'Secure Key Management'],
 };
 
 function GitHubIcon() {
@@ -118,27 +118,37 @@ export default function AboutPage() {
             className="font-body text-base text-text-secondary mb-4"
             style={{ lineHeight: 1.75 }}
           >
-            I&apos;m a software engineer with a genuine curiosity for how systems are built and
-            broken. My background spans full-stack web development, systems programming, and
-            application security — I find the overlap between them the most interesting place
-            to work.
+            I&apos;m a software engineer with a genuine curiosity for how systems are built and broken. 
+            Currently completing a BA in Computer Science and a BA in Linguistics at Dartmouth College (Class of 2026), 
+            I&apos;m on track to graduate magna cum laude, a reflection of the standard I hold myself to across everything 
+            I take on. My technical background spans full-stack web development, systems programming, and application security. 
+            I&apos;m drawn to the intersections between these disciplines: the places where a deeper understanding of one 
+            makes you meaningfully better at the others. That cross-domain thinking is something I bring to every project 
+            I work on. I care deeply about writing code that is correct, maintainable, and fast. I&apos;ve
+            built production web apps, and leveraged state-of-the-art security tools to ensure vulnerbilities are mitigated and
+            attack surfaces are minimized. Each of these projects has made me a better engineer.
           </p>
           <p
             className="font-body text-base text-text-secondary mb-4"
             style={{ lineHeight: 1.75 }}
           >
-            I care deeply about writing code that is correct, maintainable, and fast. I&apos;ve
-            built production web apps, contributed to open-source tooling, and spent time
-            poking at security vulnerabilities in controlled environments — each of which has
-            made me a better engineer.
+            The linguistics degree isn&apos;t a detour from software, rather, it&apos;s an advantage. Studying how language encodes
+            structure and meaning has sharpened the way I think about system design, API contracts, and the gap
+            between what code says and what it does. It&apos;s also made me a more deliberate communicator, which matters
+            as much in a team as technical ability does. My interest in linguistics has lead me to explore Natural Language Processing
+            (NPL), specifically through the lense of Word to Vector, Sequence to Sequence, and Transformer models.
           </p>
           <p
             className="font-body text-base text-text-secondary"
             style={{ lineHeight: 1.75 }}
           >
-            I&apos;m currently a student finishing my degree and actively looking for roles where
-            I can contribute meaningfully from day one while continuing to learn from an
-            experienced team. If that sounds like your organisation, I&apos;d love to talk.
+            
+            
+            Outside of engineering, I serve as team leader for the Dartmouth Model United Nations travel team. This was a 
+            role that has pushed me to coordinate across competing priorities, represent a position under pressure, and 
+            bring people to consensus when stakes feel high. It&apos;s not unlike debugging a system with too many moving 
+            parts. I&apos;m actively looking for roles in full-stack engineering, backend systems, or application security. 
+            I&apos;m genuinely open to wherever the most interesting problems are.
           </p>
 
           {/* CTAs */}

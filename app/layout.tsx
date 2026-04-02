@@ -26,8 +26,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title:       'Portfolio',
-  description: 'Software engineer portfolio',
+  title:       'Daniel Chen - Tech Portfolio',
+  description: 'Software engineer portfolio - building clean, functional products across full-stack, backend, and security.',
 };
 
 export default function RootLayout({

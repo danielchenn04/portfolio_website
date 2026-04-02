@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 
-// TODO: Replace OWNER_NAME with your full name before launch
-const OWNER_NAME = '[Your Name]';
+const OWNER_NAME = 'Daniel Chen';
 
 export function buildMetadata({
   title,

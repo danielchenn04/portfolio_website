@@ -1,11 +1,15 @@
 import type { Metadata }     from 'next';
 import { notFound }           from 'next/navigation';
 import Image                  from 'next/image';
+import fs                     from 'fs';
+import path                   from 'path';
 import { MDXRemote }          from 'next-mdx-remote/rsc';
 import { getProjectBySlug, getAllSlugs } from '@/lib/projects';
 import { buildMetadata }      from '@/lib/metadata';
+import { markdownToHtml }     from '@/lib/markdownToHtml';
 import { ReadingProgressBar } from '@/components/projects/ReadingProgressBar';
 import { ProjectEmbed }       from '@/components/projects/ProjectEmbed';
+import { DocModal }           from '@/components/projects/DocModal';
 import { DotShield }          from '@/components/ui/DotShield';
 
 interface PageProps {
@@ -30,6 +34,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     path:        `/projects/${project.slug}`,
     image:       project.screenshot,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Doc report lookup — maps project slug → content/docs/*.md
+// ---------------------------------------------------------------------------
+
+const DOC_REPORTS: Record<string, { file: string; title: string }> = {
+  'Pond-Post': {
+    file:  'whisperchain-security-report.md',
+    title: 'WhisperChain+ Security Design Report & Threat Model',
+  },
+};
+
+function readDocReport(slug: string): { title: string; html: string } | null {
+  const entry = DOC_REPORTS[slug];
+  if (!entry) return null;
+  const filePath = path.join(process.cwd(), 'content', 'docs', entry.file);
+  if (!fs.existsSync(filePath)) return null;
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  return { title: entry.title, html: markdownToHtml(raw) };
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +112,7 @@ export default async function ProjectSlugPage({ params }: PageProps) {
   if (!project) notFound();
 
   const readTime = calculateReadTime(project.content);
+  const docReport = readDocReport(params.slug);
 
   return (
     <>
@@ -159,6 +184,9 @@ export default async function ProjectSlugPage({ params }: PageProps) {
               <GitHubIcon />
               View Code
             </a>
+            {docReport !== null && (
+              <DocModal title={docReport.title} htmlContent={docReport.html} />
+            )}
           </div>
 
           {/* Stack badges */}

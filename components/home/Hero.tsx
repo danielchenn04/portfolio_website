@@ -171,7 +171,7 @@ export function Hero() {
                 className="font-heading font-bold text-text-primary"
                 style={{ fontSize: '60px', lineHeight: 1.1, marginBottom: '16px' }}
               >
-                Your Name
+                Daniel Chen
               </h1>
             </DotShield>
 

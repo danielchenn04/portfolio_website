@@ -302,7 +302,145 @@
   margin-bottom: 1.25rem;
 }
 
-/* ── 8. Mobile menu animations ───────────────────────────── */
+/* ── 8. Doc modal prose content ──────────────────────────── */
+.doc-modal-body {
+  color:       var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size:   0.9375rem;
+  line-height: 1.75;
+}
+
+.doc-modal-body h1 {
+  font-family:    var(--font-heading);
+  font-size:      1.5rem;
+  font-weight:    700;
+  color:          var(--color-text-primary);
+  margin-bottom:  1rem;
+  letter-spacing: 0.04em;
+}
+
+.doc-modal-body h2 {
+  font-family:    var(--font-heading);
+  font-size:      1.125rem;
+  font-weight:    700;
+  color:          var(--color-text-primary);
+  margin-top:     2rem;
+  margin-bottom:  0.75rem;
+  letter-spacing: 0.03em;
+}
+
+.doc-modal-body h3 {
+  font-family:    var(--font-heading);
+  font-size:      0.9375rem;
+  font-weight:    600;
+  color:          var(--color-text-accent);
+  margin-top:     1.5rem;
+  margin-bottom:  0.5rem;
+}
+
+.doc-modal-body h4 {
+  font-family:    var(--font-heading);
+  font-size:      0.875rem;
+  font-weight:    600;
+  color:          var(--color-text-secondary);
+  margin-top:     1.25rem;
+  margin-bottom:  0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.doc-modal-body p {
+  margin-bottom: 1rem;
+}
+
+.doc-modal-body ul {
+  margin-bottom: 1rem;
+  padding-left:  1.5rem;
+}
+
+.doc-modal-body li {
+  list-style-type: disc;
+  margin-bottom:   0.3rem;
+}
+
+.doc-modal-body strong {
+  font-weight: 600;
+  color:       var(--color-text-primary);
+}
+
+.doc-modal-body em {
+  font-style: italic;
+}
+
+.doc-modal-body code {
+  font-family:   var(--font-heading);
+  font-size:     0.8125em;
+  color:         var(--color-text-accent);
+  background:    var(--color-accent-subtle);
+  border:        1px solid var(--color-accent-border);
+  border-radius: 4px;
+  padding:       0.1em 0.35em;
+}
+
+.doc-modal-body pre {
+  background:    var(--color-bg-subtle);
+  border:        1px solid var(--color-border-default);
+  border-radius: 6px;
+  padding:       1rem 1.25rem;
+  overflow-x:    auto;
+  margin-bottom: 1.25rem;
+  font-size:     0.8125rem;
+}
+
+.doc-modal-body pre code {
+  background: transparent;
+  border:     none;
+  padding:    0;
+  color:      var(--color-text-primary);
+}
+
+.doc-modal-body hr {
+  border:     none;
+  border-top: 1px solid var(--color-border-default);
+  margin:     1.75rem 0;
+}
+
+.doc-modal-body blockquote {
+  border-left:   2px solid var(--color-accent);
+  padding-left:  1rem;
+  color:         var(--color-text-secondary);
+  font-style:    italic;
+  margin-bottom: 1rem;
+}
+
+.doc-modal-body table {
+  width:         100%;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+  font-size:     0.875rem;
+}
+
+.doc-modal-body th,
+.doc-modal-body td {
+  padding:       0.5rem 0.75rem;
+  text-align:    left;
+  border:        1px solid var(--color-border-default);
+}
+
+.doc-modal-body th {
+  font-family:   var(--font-heading);
+  font-size:     0.8125rem;
+  font-weight:   600;
+  background:    var(--color-bg-subtle);
+  color:         var(--color-text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.doc-modal-body td {
+  color: var(--color-text-primary);
+}
+
+/* ── 9. Mobile menu animations ───────────────────────────── */
 @keyframes fadeInScale {
   from { opacity: 0; transform: scale(0.98); }
   to   { opacity: 1; transform: scale(1); }

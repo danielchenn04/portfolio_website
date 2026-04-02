@@ -1,0 +1,139 @@
+---
+title:      "Pond Post"
+slug:       "Pond-Post"
+category:   "Full Stack"
+order:      2
+stack:      ["Next.js", "TypeScript", "Supabase", "PostgreSQL", "Web Crypto API", "JWT"]
+tags:       ["web", "messaging", "end-to-end-encryption", "privacy", "multi-tenant", "security", "real-time"]
+summary:    "A real-time peer recognition platform letting teams send and receive kudos with live notifications."
+liveUrl:    "https://project-pond-post-1m5t.vercel.app"
+repoUrl:    "https://github.com/danielchenn04/project_pond_post"
+screenshot: "/screenshots/kudos-messenger.png"
+date:       "2025-03"
+---
+
+## Problem Statement
+
+How do we create an anonymized messaging software which prioritizes privacy and maintains row-level security, 
+while still allowing moderation?
+
+Anonymized messaging systems face a fundamental tension: the same privacy guarantees that protect users from 
+each other also make it difficult to hold bad actors accountable. Most systems resolve this by either abandoning 
+true anonymity (linking messages to real identities for moderation) or abandoning moderation entirely. I wanted to 
+build a system that does neither — one where senders are genuinely anonymous to recipients and moderators, yet 
+accountability is still possible when it matters.
+
+## Solution Overview
+
+I built this in two phases. The first was **WhisperChain+**, a Python CLI application developed for a security 
+course, which established the core cryptographic and moderation architecture. The second was **Pond Post**, a 
+full-stack Next.js web application that evolved directly from those foundations into a multi-tenant, production-ready 
+platform. A copy of the **WhisperChair+**'s Security design document can be found on this page for your reference.
+
+Both systems share the same core insight: anonymity and accountability are not opposites if you separate *identity* 
+from *behavior*. Users are identified by system-generated IDs and anonymous aliases (Pond-nyms) rather than their real 
+names. Messages are end-to-end encrypted so the server never holds plaintext. Moderation is handled through a 
+re-encryption escrow protocol, meaning when a message is flagged, the recipient re-encrypts it. On the other hand, for a 
+Guardian using the Guardian's public key, moderators can only read what they are explicitly assigned, and only after a flag has 
+been raised. No one role ever has access to everything.
+
+## Technical Decisions & Architecture
+
+**End-to-end encryption with RSA-OAEP.** Both systems use 2048-bit RSA key pairs. In WhisperChain+, key pairs were 
+generated locally and stored as `.pem` files. In Pond Post, key generation moved to the browser using the Web Crypto API, 
+with the private key wrapped in AES-GCM-256 using a user-defined session PIN before being stored in `localStorage`. The 
+server stores only the public key and never participates in decryption. This was a deliberate architectural choice as the 
+API routes in `messages/route.ts` accept only the `encryptedBody` ciphertext. This means even a fully compromised database 
+exposes no readable message content.
+
+**Blind token replay prevention.** In WhisperChain+, each send and flag action required a one-time blind token signed with 
+the sender's private key, managed by a `TokenManager` class that tracked used tokens per round. Pond Post carries this 
+forward directly through `messages/route.ts` which checks the `used_tokens` table before processing any message, returning a 
+`409 Conflict` on duplicate tokens. This prevents replay attacks where an intercepted request could be re-submitted.
+
+**PBKDF2 password hashing.** Both systems use PBKDF2-HMAC-SHA256 with 100,000 iterations and a 16-byte random salt per user,
+directly inspired by the WhisperChain+ `auth.py` implementation. In Pond Post's `register/route.ts`, this is implemented 
+using Node's `crypto.pbkdf2`. The salt and hash are stored as `base64url` strings in Supabase, and the plaintext password 
+is never transmitted after the initial hashing step.
+
+**JWT session management with active pond context.** Each session token in Pond Post encodes not just the user's identity 
+but their `activePondId` and `role`. When a user switches ponds (`ponds/switch/route.ts`), a new JWT is issued with the 
+updated context. This means every downstream API call is automatically scoped to the correct pond without requiring an extra 
+lookup, and Supabase Row-Level Security policies can enforce `pond_id` isolation at the database level.
+
+**Append-only audit log.** WhisperChain+ maintained an append-only flat file log. Pond Post formalizes this as a Supabase 
+table with an RLS policy permitting `INSERT` only while no `UPDATE` or `DELETE` is ever permitted. Every significant action 
+across all route files writes to this table before returning a response, including the audit log view itself (`audit/route.ts` 
+inserts a `VIEW_AUDIT_LOG` entry before returning results), creating a complete chain of custody.
+
+**Moderation through re-encryption escrow.** Rather than giving moderators a master key or decrypting messages server-side, 
+the flagging flow re-encrypts the message client-side using the assigned Guardian's public key. The server stores two separate 
+ciphertexts for flagged messages. First is the original (for the recipient) and the second is the Guardian copy. Ultimately, 
+the server never holds plaintext. This was the core insight from WhisperChain+'s moderator-as-pseudo-recipient design, extended 
+to the web.
+
+**Multi-tenant isolation.** Pond Post introduced a multi-tenant architecture that WhisperChain+ did not have. Every table is 
+partitioned by `pond_id`, and all RLS policies enforce this boundary. The `register/route.ts` handles three distinct registration 
+flows in a single endpoint. This creates a new pond (Keeper role), joining via join code (Inhabitant), or accepting a one-time 
+invite link (Guardian or Keeper). Lastly `register/routes.ts` validates the invite token or join code before creating the user 
+to prevent race conditions.
+
+
+## Challenges I Faced
+
+**The anonymity-accountability paradox.** The hardest design problem was ensuring that moderators could read flagged messages 
+without ever having access to unflagged ones, and without the server holding any decryption keys. The solution was a client-side 
+re-encryption at flag time using the Guardian's public key. This initially sounds simple but required careful sequencing: the 
+recipient must still be able to decrypt their own message after flagging it, which means the original ciphertext must remain 
+intact while a separate Guardian-encrypted copy is stored alongside it.
+
+**Preventing the name-ID dictionary as a high-value target.** The WhisperChain+ security report explicitly acknowledged this 
+vulnerability, a centralized name-to-ID mapping that, if compromised alongside audit logs, could de-anonymize all users. Pond 
+Post addresses this by storing only the Pond-nym (alliterative alias) and never exposing `sender_mapping_id` to the frontend. 
+The audit log enrichment in `audit/route.ts` fetches `pond_nym_name` rather than email or real name, so even the audit log UI 
+never reveals true identity.
+
+**Invite link security.** One-time invite links needed to be secure against reuse and expiry without creating a 
+time-of-check/time-of-use vulnerability. The `register/route.ts` solves this by validating the invite token *before* creating 
+the user. If validation fails for any reason, no partial user record is written. The token is only marked as used after the full 
+registration transaction succeeds, so a failed registration does not consume the invite.
+
+**Moving from a local CLI to a stateless API.** WhisperChain+ could maintain in-memory state (the `TokenManager`'s used token 
+set, the round lifecycle) because it was a single-process application. Pond Post runs as stateless serverless functions, so all 
+state had to move to the database. The `used_tokens` table is the direct equivalent of `TokenManager.used`, but it needed a TTL 
+strategy and careful indexing to avoid becoming a performance bottleneck at scale.
+
+## What I Learned
+
+The most valuable thing I took from this project is that **security properties need to be enforced at the lowest possible layer, 
+not trusted at the application layer**. Early in WhisperChain+, access control was handled by checking `user.role` inside Python 
+methods. That works in a CLI but it's fragile. Notably, a bug in one method could bypass it entirely. Pond Post pushes the same 
+guarantees down to Supabase RLS policies, so even a buggy API route cannot accidentally return data from another pond. **Defense in 
+depth** is not just a principle; it's a structural decision about where enforcement lives.
+
+I also learned that anonymity is not just about hiding names, but rather, it's about minimizing the surface area of data that could 
+be combined to re-identify someone. The security report's note about the name-ID dictionary being a high-value target was a concrete
+lesson in this: two individually harmless datasets (a list of aliases, a list of audit events) become dangerous in combination. 
+Pond Post's architecture was deliberately designed to ensure those two datasets can never be joined.
+
+Finally, building the same system twice, once as a Python CLI and once as a full-stack web app, taught me that the cryptographic 
+decisions are largely portable, but the trust model shifts significantly. In a CLI, the server and the client are the same process. 
+On the web, the server is explicitly untrusted with plaintext, and that changes every design decision downstream.
+
+---
+
+## Future Improvements
+
+**Zero-knowledge proofs for sender verification.** The security report identified the MBC library as a path toward decentralized, 
+zero-knowledge encryption. Currently, non-repudiation relies on the audit log as a sender's action is recorded, but a sophisticated 
+attacker who compromises the database could theoretically alter logs (mitigated by the append-only policy, but not impossible at 
+the infrastructure level). Zero-knowledge proofs would allow senders to prove they sent a message without the server ever being 
+able to deny or forge that proof.
+
+**Message appeal flow.** The security report noted that flagged users have no recourse as a Guardian's ban is final. A proper 
+appeal flow would let a banned user request admin review, with the admin receiving the flagged message re-encrypted under their 
+public key. This closes the fairness gap without weakening the moderation model.
+
+**Token TTL and cleanup.** The `used_tokens` table currently grows indefinitely. Since blind tokens are single-use and tied to 
+a session, expired tokens should be pruned on a schedule. Without this, the replay-prevention check becomes a full-table scan 
+over time.

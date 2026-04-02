@@ -46,7 +46,7 @@ export default function Home() {
             >
               I&apos;m a student software engineer with a passion for building clean,
               functional products. Open to frontend, backend, full-stack, and security
-              roles — wherever I can contribute, grow, and make an impact.
+              roles, especially wherever I can contribute, grow, and make an impact.
             </p>
           </DotShield>
           <DotShield tight className="mt-8">

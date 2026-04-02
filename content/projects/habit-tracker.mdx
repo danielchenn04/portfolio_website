@@ -1,37 +1,96 @@
 ---
-title:      "Habit Tracker"
+title:      "Bettr"
 slug:       "habit-tracker"
 category:   "Full Stack"
 order:      1
-stack:      ["Next.js", "TypeScript", "PostgreSQL", "Prisma", "Tailwind CSS"]
+stack:      ["React 19", "JavaScript", "PostgreSQL", "Vite", "Supabase"]
 tags:       ["web", "productivity", "full-stack"]
-summary:    "A full-stack habit tracking app with streaks, progress visualisation, and daily reminders."
-liveUrl:    "https://placeholder.example"
-repoUrl:    "https://github.com/yourusername/habit-tracker"
+summary:    "A full-stack habit tracking app withwith social integration to help you do bettr."
+liveUrl:    "https://bettr-tau.vercel.app/"
+repoUrl:    "https://github.com/danielchenn1/bettr"
 screenshot: "/screenshots/habit-tracker.png"
-date:       "2025-01"
+date:       "2025-09"
 ---
 
 ## Problem Statement
 
-TODO: Describe the problem this project solves.
+Most habit and goal tracking apps are solitary experiences. You set goals in isolation and either 
+succeed or quietly abandon them. Bettr solves the accountability gap: people are more likely 
+to follow through on goals and habits when they can share progress, collaborate on shared 
+objectives, and stay visible to people they care about.   
 
 ## Solution Overview
 
-TODO: Describe your solution at a high level.
+Bettr is a full-stack web app where users track personal habits and long-term goals, 
+then opt into a social layer by following friends' progress, collaborating on shared goals 
+with per-member step tracking, and leaving comments on each other's posts. A serverless 
+backend (Supabase Edge Functions) handles business logic like streak calculations, friend 
+request management, and social feed generation, while Row Level Security enforces data privacy 
+at the database layer.      
 
 ## Technical Decisions & Architecture
 
-TODO: Explain the key technical choices you made and why.
+Supabase over a custom backend — The project started with a Django backend but migrated entirely 
+to Supabase Edge Functions (Deno). This eliminated a separate server to manage, co-located 
+business logic with the database, and reduced infrastructure cost to near zero on the free tier.
+                                                                                                                                                
+Split data access pattern — Simple reads go directly from React to Supabase (RLS-enforced via 
+JWT). Complex, multi-table writes (habit completion with streak logic, shared goal membership) 
+go through Edge Functions that use a service-role client for atomic transactions.
+                                                                                                                                                
+React Query for data fetching — Centralized all server state in queries.js with consistent stale 
+times and cache invalidation, avoiding prop drilling and redundant fetches across the 12-page app.
+                                                                                                                                                
+Bidirectional friendship normalization — The friendships table stores each pair once using 
+userLow/userHigh (sorted UUIDs), ensuring uniqueness without a composite key constraint and 
+simplifying duplicate-check queries.
+                                                                                                                                                
+JSON columns for flexible schema — Fields like settings, onboarding, actionSteps, and photos are 
+stored as JSON to avoid migrations as requirements evolved during development.
 
 ## Challenges I Faced
 
-TODO: Describe the hardest problems you encountered and how you solved them.
+Migrating from Django to Edge Functions — Porting streak logic, weekly habit resets, and shared 
+goal state management from Django ORM to Deno required rewriting queries from scratch and reasoning 
+carefully about atomicity without a traditional ORM. Timezone-aware date handling for the habit 
+streaks (preventing off-by-one completions) was particularly tricky to get right server-side.
+                                                                                                                                                
+Social feed query complexity — The Friends page simultaneously resolves friend requests, friend 
+lists, public goals, shared goal groups with per-user step checks, comments, and profile pictures 
+across many join tables — all while respecting per-user privacy settings. Coordinating these
+parallel queries efficiently and displaying them correctly required multiple rounds of debugging 
+and edge function optimization.                
+                                                                                                                                                
+RLS on migrated data — Retrofitting Row Level Security to existing data exposed cases where 
+foreign key relationships were incomplete (e.g., original goal owners missing from 
+sharedGoalMembers). The shared-goals function had to be written tolerantly only returning partial 
+results rather than failing to avoid breaking existing user workflows.                                                                                        
+                                                                                                                                                
+Photo uploads cross-browser — Handling HEIC images from Safari, compressing uploads to a max 
+byte size before storing as base64, and managing photo removal state across edits required 
+several layers of preprocessing before uploads were reliable.
 
 ## What I Learned
 
-TODO: Reflect on the most valuable things you learned building this project.
+- Serverless edge functions are a practical fit for a small team: you give up ORM convenience 
+but gain deployment simplicity and tight database co-location.                                                                                                                                     
+- RLS is powerful but requires designing your schema and access patterns around it from the 
+start, retrofitting RLS is to be avoided if possible.
+- React Query's cache invalidation model rewards upfront investment in query key design; a 
+centralized queryKeys.js paid off as the query count grew.                                                                                                                                            
+- Social features multiply complexity non-linearly. What looks like "show friends' goals" 
+becomes a multi-join, privacy-filtered, per-user state problem quickly.    
 
 ## Future Improvements
 
-TODO: List features or changes you would add given more time.
+- Push notifications — Remind users of scheduled habits and alert them when friends comment or 
+update shared goals.
+- Streak recovery / grace periods — Currently missing a single day breaks a streak; a 
+configurable grace period would reduce frustration.        
+- Goal templates — Pre-populate common goals/habits from bettrGoals/bettrHabits tables during 
+onboarding (the tables exist but aren't surfaced in
+the UI).                                                                                                                                        
+- Analytics improvements — The Journey page could show habit correlation data (e.g., which 
+habits co-occur with goal progress).                  
+- Mobile app — The current SPA works on mobile but wasn't designed mobile-first; a React Native 
+port would improve the daily check-in experience.
