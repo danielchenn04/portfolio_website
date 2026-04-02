@@ -2,8 +2,6 @@ import { Resend }                      from 'resend';
 import { z }                           from 'zod';
 import { NextRequest, NextResponse }   from 'next/server';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 // ── In-memory rate limiter (3 submissions / IP / 10 min) ─────────────────────
 // Module-level state: persists across requests within the same serverless
 // function instance. Acceptable for low-traffic portfolio use.
@@ -66,6 +64,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Send via Resend
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const { error } = await resend.emails.send({
     from:    process.env.CONTACT_FROM_EMAIL ?? '',
     to:      process.env.CONTACT_TO_EMAIL   ?? '',
