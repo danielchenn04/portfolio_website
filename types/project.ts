@@ -3,7 +3,8 @@ export type ProjectCategory =
   | 'Security'
   | 'Frontend'
   | 'Backend'
-  | 'Systems';
+  | 'Systems'
+  | 'ML';
 
 export interface ProjectFrontmatter {
   title:      string;

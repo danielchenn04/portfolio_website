@@ -9,6 +9,7 @@ const VALID_CATEGORIES: readonly ProjectCategory[] = [
   'Frontend',
   'Backend',
   'Systems',
+  'ML',
 ];
 
 const CONTENT_DIR = path.join(process.cwd(), 'content', 'projects');
