@@ -1,0 +1,117 @@
+---
+title:      "Bert Chinese Classifier"
+slug:       "bert-classifier"
+category:   "ML"
+order:      3
+stack:      [Python, PyTorch, HuggingFace, LangChain, FastAPI, Docker, OpenAI]
+tags:       [Machine Learning, NLP, Agentic AI, BERT, LangChain, Deployment]
+summary:    "A fine-tuned BERT model that classifies Chinese text by regional dialect, wrapped in a LangChain agentic pipeline that retrieves dialect context and generates LLM-powered linguistic explanations."
+liveUrl:    "bert-chinese-classifier.vercel.app"
+repoUrl:    "https://github.com/danielchenn04/Bert-Chinese-Classifier.git"
+screenshot: "/screenshots/bert-classifier.png"
+date:       "2026-06"
+---
+
+## Problem Statement
+
+Chinese is not a single monolithic language - it encompasses a wide range of regional varieties 
+that differ substantially in phonology, vocabulary, and grammar. Identifying which regional 
+variety a piece of text likely originates from is a non-trivial classification problem, 
+especially for varieties that are closely related to Standard Mandarin. Beyond classification 
+alone, a raw model prediction offers little insight to a non-specialist: knowing a text was 
+predicted as "Beijing dialect" is only useful if you understand why that prediction was made 
+and what linguistic features drove it.
+
+## Solution Overview
+
+This project has two layers. The first is a fine-tuned BERT classifier - specifically 
+bert-base-chinese fine-tuned on a corpus of regional Chinese text spanning 8 cities 
+(Beijing, Fuzhou, Kunming, Shanghai, Shenyang, Shenzhen, Taiyuan, Wuhan), achieving F1 
+scores of 0.72-0.98 across all regional varieties. The second is a LangChain-orchestrated 
+agentic pipeline that takes the model's prediction, retrieves grounding context from a 
+curated dialect knowledge base, and prompts GPT-4o-mini to generate a linguistically 
+grounded explanation of the classification. The entire backend is containerized with Docker 
+and deployed as a FastAPI service on HuggingFace Spaces, with a Next.js frontend calling 
+the pipeline via a single REST endpoint.
+
+## Technical Decisions & Architecture
+
+BERT over a classical ML baseline - bert-base-chinese was chosen because it was pre-trained 
+on large-scale Chinese web text, giving it strong character-level representations out of the 
+box. Fine-tuning allowed the model to adapt those representations to the dialect classification 
+task without training from scratch. Class imbalance across regional varieties was handled via 
+weighted CrossEntropyLoss, and hyperparameter tuning used PyTorch's AdamW optimizer.
+
+Fixed pipeline over a true reasoning agent - The LangChain layer follows a fixed 
+classify - retrieve - explain sequence rather than a dynamic agent that decides its own tool 
+order. This was a deliberate choice: for a deterministic three-step task with no branching 
+logic, a fixed chain is more predictable, easier to debug, and less likely to fail mid-demo 
+than a ReAct-style agent. The pipeline still uses LangChain's tool abstraction and prompt 
+template interface, making it straightforward to extend with additional tools later.
+
+FastAPI on HuggingFace Spaces over serverless inference - HuggingFace's hosted Inference 
+Providers do not support arbitrary fine-tuned model checkpoints. Rather than fighting provider 
+allowlists, the model is loaded directly into a FastAPI process at startup and served from 
+a Dockerized HuggingFace Space. This gives full control over the inference environment and 
+avoids cold-start unpredictability from provider-side container scheduling.
+
+Grounded retrieval before generation - The LLM explanation step is deliberately constrained 
+by a retrieved dialect facts passage passed into the prompt as context. This prevents the 
+model from hallucinating linguistic features and ensures every explanation is anchored to 
+verified facts about the predicted region's dialect family.
+
+## Challenges I Faced
+
+HuggingFace Inference Provider limitations - The initial plan was to call the fine-tuned 
+model via HuggingFace's free Inference API. Two blockers emerged: the legacy 
+api-inference.huggingface.co domain was retired and replaced by a new router, and the new 
+provider system does not support arbitrary fine-tuned checkpoints even when pipeline_tag 
+metadata is correctly set. Switching to a self-hosted FastAPI container on HF Spaces resolved 
+both issues cleanly.
+
+Label mapping across training and serving environments - The label encoder used during 
+training (scikit-learn's LabelEncoder) assigns integer class indices in alphabetical order. 
+This mapping had to be explicitly reconstructed and hardcoded in the serving layer, since 
+the Spaces environment has no access to the original training notebook's runtime state. 
+Verifying the mapping end-to-end before deploying prevented silent misclassifications.
+
+Prompt engineering for constrained explanation generation - Early prompt drafts produced 
+explanations that confidently stated linguistic features not present in the retrieved context. 
+Constraining the system prompt to explicitly prohibit facts outside the provided context, 
+combined with a lower temperature setting (0.3), significantly improved factual consistency 
+across repeated calls.
+
+## What I Learned
+
+- Fine-tuning a pre-trained transformer is only half the deployment problem - the serving 
+environment, label mapping, and inference contract require as much care as the training pipeline.
+- LangChain's prompt template and chain interface reward upfront investment in prompt design; 
+a well-constrained system prompt is more reliable than post-processing LLM output.
+- Provider-managed inference is convenient but comes with hidden constraints on which models 
+are actually supported - self-hosting via Docker sidesteps this entirely at the cost of 
+managing the container lifecycle yourself.
+- Grounding LLM generation in retrieved context is not just an architectural pattern - it is 
+a practical necessity for any domain where factual accuracy matters more than fluency.
+
+## Future Improvements
+
+- Vector-based retrieval - The current retrieval step is a dictionary lookup over 8 fixed 
+regions. Replacing it with embedding-based similarity search over a richer knowledge base 
+(more dialect facts per region, example sentences, historical context) would make the RAG 
+step more robust and scalable.
+- Confidence calibration - The model's raw softmax confidence scores are not well-calibrated 
+probabilities. Applying temperature scaling post-training would make the confidence field 
+more meaningful to end users.
+- Expanded regional coverage - The current dataset covers 8 cities. Adding varieties from 
+underrepresented regions (Cantonese, Hokkien, Hakka) would substantially increase the 
+classifier's practical utility.
+- Streaming explanation output - The GPT-4o-mini explanation currently returns as a single 
+blocking response. Streaming the generation token-by-token to the frontend would improve 
+perceived latency for the user.
+- CI/CD for model updates - Retraining currently requires manual re-upload to HuggingFace 
+Hub. Adding an automated pipeline (triggered by new training data) with evaluation gating 
+before deployment would make iteration safer and faster.
+- Smaller text sequences to mimic human speech - The current corpus uses entire documents,
+thus accuracy is highest with longer sequences of text rather than sentence length samples.
+Splitting samples into shorter sequences can allow for better application of analysis such
+as on data from X or other socila media platforms. 
